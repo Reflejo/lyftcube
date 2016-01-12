@@ -4,6 +4,7 @@
 #include <linux/limits.h>
 #include <stdio.h>
 #include <sys/stat.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #define ANIMATIONS_PATH             "/opt/lyft/lyftcube/animations/"
@@ -22,13 +23,22 @@ struct Route {
 
 char *animation_path(char *name) {
     static char path[PATH_MAX];
+    static char finalpath[PATH_MAX];
     snprintf(path, sizeof(path) - 1, "%s%s.gif", ANIMATIONS_PATH, name);
-    return path;
+    realpath(path, finalpath);
+    if (strncmp(finalpath, ANIMATIONS_PATH, strlen(ANIMATIONS_PATH)) == 0) {
+        return finalpath;
+    }
+
+    return NULL;
 }
 
 off_t animation_size(char *name) {
     struct stat stats;
-    int ret = stat(animation_path(name), &stats);
+    if (stat(animation_path(name), &stats) != 0) {
+        return 0;
+    }
+
     return stats.st_size;
 }
 
@@ -67,6 +77,11 @@ bool list_animations(ad_http_t *http, char *name, char *response) {
 
 bool play_animation(ad_http_t *http, char *name, char *response) {
     char *path = animation_path(name);
+    if (path == NULL) {
+        printf("Invalid animation name given\n");
+        return false;
+    }
+
     printf("Playing animation %s\n", path);
 
     FILE *file = fopen(CURRENT_ANIMATION_FILE, "wb");
