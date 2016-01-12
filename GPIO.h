@@ -2,6 +2,7 @@
 #define _GPIOH_
 
 #include <bcm2835.h>
+#include <stdbool.h>
 
 #define ENABLE          RPI_BPLUS_GPIO_J8_15
 
@@ -17,7 +18,7 @@
 /**
  * Turn off all LEDs and finalize SPI.
  */
-int initialize_gpios(void);
+bool initialize_gpios(void);
 
 /**
  * Configures all GPIO modes and initial state.

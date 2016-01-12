@@ -2,6 +2,8 @@
 #define _LEDSH_
 
 #include <stdbool.h>
+#include <stdint.h>
+#include <linux/limits.h>
 
 /**
  * This matrix represents the current state of the LED cube, the first
@@ -24,17 +26,20 @@
  * would be (ith + 8) and Blue (ith + 16).
  *
  */
-typedef unsigned char LEDCube[4][8][24];
+typedef uint8_t LEDCube[4][8][24];
 
 struct Frame {
     LEDCube cube;
-    unsigned short duration;
+    uint16_t duration;
 };
 
 struct Animation {
     struct Frame *frames;
-    int frames_count;
+    uint32_t frames_count;
 };
+
+/// Array of LEDs levels where i=0 is the bottom-most and 8 is the top-most
+extern const uint8_t levels[8];
 
 /**
  * Performs given animation by multiplexing cube levels. It uses bit angle
@@ -44,9 +49,8 @@ struct Animation {
  * - parameter pretend:   When true we'll print on the screen every LED
  *                        level using a slowed-down BAM rate (debug only).
  */
-void multiplex_levels(struct Animation animation, bool pretend);
+void multiplex(struct Animation *animation, bool pretend);
 
-/// Array of LEDs levels where i=0 is the bottom-most and 8 is the top-most
-extern const int levels[8];
+bool load_current_animation(struct Animation *animation, char *path);
 
 #endif

@@ -1,33 +1,13 @@
 #include "parser.h"
 
+#include <gif_lib.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #define MIN(X,Y) ((X) < (Y) ? (X) : (Y))
-
-#pragma pack(push, 1)
-
-typedef struct BitmapHeader {
-    unsigned short type;
-    unsigned int size;
-    unsigned int reserved;
-    unsigned int offset;
-} BitmapHeader;
-
-typedef struct BitmapInfo {
-    unsigned int size;              // Header size in bytes
-    int width, height;              // Width and height of image
-    unsigned short planes;          // Number of colour planes
-    unsigned short bits;            // Bits per pixel
-    unsigned int compression;       // Compression type
-    unsigned int imagesize;         // Image size in bytes
-    int xresolution, yresolution;   // Pixels per meter
-    unsigned int ncolours;          // Number of colours
-    unsigned int importantcolours;  // Important colours
-} BitmapInfo;
-
-#pragma pack(pop)
+#define HEIGHT      64
+#define WIDTH       8
 
 // --- Misc helpers ----
 
@@ -40,93 +20,23 @@ char *binary(int n) {
     return binary;
 }
 
-int convert_to_4bits(int component) {
+uint8_t convert_to_4bits(int component) {
     return MIN(ceil(component / 2.0), 0b1111);
 }
 
-// --- Parsing helpers ----
+uint16_t find_delay_time(SavedImage *image, int previous_delay) {
+    ExtensionBlock *blocks = image->ExtensionBlocks;
 
-int parse_durations(char *duration_path, struct Animation *animation) {
-    FILE *file = fopen(duration_path, "rb");
-    if (file == NULL) {
-        fprintf(stderr, "Can't open file %s\n", duration_path);
-        return 0;
-    }
-
-    fseek(file, 0, SEEK_END);
-    int length = ftell(file);
-    rewind(file);
-
-    if (length != animation->frames_count) {
-        fprintf(stderr, "Invalid durations length (%d)\n", length);
-        return 0;
-    }
-
-    int i;
-    for (i = 0; i < length; i++) {
-        printf("Duration: %d\n", animation->frames[i].duration);
-        fread(&animation->frames[i].duration, 1, 1, file);
-    }
-
-    fclose(file);
-    return i;
-}
-
-int parse_bitmap(char *bitmap_path, struct Animation *animation) {
-    BitmapHeader header;
-    BitmapInfo infoHeader;
-
-    FILE *file = fopen(bitmap_path, "rb");
-    if (file == NULL) {
-        fprintf(stderr, "Can't open file %s\n", bitmap_path);
-        return 0;
-    }
-
-    if (fread(&header, 1, sizeof(BitmapHeader), file) != sizeof(BitmapHeader)) {
-        fprintf(stderr, "Invalid bitmap file's header\n");
-        fclose(file);
-        return 0;
-    }
-
-    if (fread(&infoHeader, 1, sizeof(BitmapInfo), file) != sizeof(BitmapInfo)) {
-        fprintf(stderr, "Invalid bitmap file's info header\n");
-        fclose(file);
-        return 0;
-    }
-
-    animation->frames_count = ceil(infoHeader.width / 8);
-    animation->frames = malloc(sizeof(struct Frame) * animation->frames_count);
-
-    fseek(file, header.offset, SEEK_SET);
-    unsigned short colorBytes;
-    int i = 0, bit = 0;
-    for (i = 0; i < (infoHeader.width * infoHeader.height); i++) {
-        if (fread(&colorBytes, 1, 2, file) != 2) {
-            fprintf(stderr, "Error reading pixels, invalid bitmap file\n");
-            break;
-        }
-
-        // We only support 16-bit BMPs, colors are represented by two bytes
-        // as: r, g, b = 5 bits, 5 bits, 5 bits.
-        unsigned char r = MIN(convert_to_4bits((colorBytes >> 10) & 0x1f), 10);
-        unsigned char g = convert_to_4bits((colorBytes >> 5) & 0x1f);
-        unsigned char b = convert_to_4bits((colorBytes >> 0) & 0x1f);
-
-        int level = (i / infoHeader.width) / 8.0;
-        int frame_index = (i % infoHeader.width) / 8.0;
-        int x = (i % infoHeader.width) % 8;
-        int y = (i / infoHeader.width) % 8;
-
-        struct Frame *frame = &animation->frames[frame_index];
-        for (bit = 0; bit < 4; bit++) {
-            frame->cube[bit][level][y] |= ((r >> bit) & 1) << (7 - x);
-            frame->cube[bit][level][y + 8] |= ((g >> bit) & 1) << (7 - x);
-            frame->cube[bit][level][y + 16] |= ((b >> bit) & 1) << (7 - x);
+    GraphicsControlBlock GCB;
+    for (uint16_t i = 0; i < image->ExtensionBlockCount; i++) {
+        ExtensionBlock block = blocks[i];
+        if (block.Function == GRAPHICS_EXT_FUNC_CODE) {
+            DGifExtensionToGCB(block.ByteCount, block.Bytes, &GCB);
+            return GCB.DelayTime;
         }
     }
 
-    fclose(file);
-    return 1;
+    return -1;
 }
 
 // --- Exposed functions ----
@@ -151,32 +61,67 @@ void dump_buffer(unsigned char *buffer) {
 }
 
 /**
- * Parse animation frames from 16-bits bitmap file and durations from a binary
- * file.
+ * Parse animation frames from a multi-frame animated GIF file.
  *
- * - parameter bitmap_path: A path to a 16-bits bitmap file containing all cube
- *                          levels one on top of each other and every anymation
- *                          frame next to the other, this means that the image
- *                          size should be h: 8 x 8 and w: 8 x frames_count.
- * - parameter duration_path: A path to a binary file containing 2 bytes
- *                            representing the duration of each frame; hence
- *                            the file size must be frames_count x 2
+ * - parameter gif_path:      A path to a multiframe GIF file containing all cube
+ *                            levels one on top of each other.
  */
-struct Animation parse_animation(char *bitmap_path, char *delays_path) {
-    struct Animation animation;
-    animation.frames = NULL;
-
-    if (parse_bitmap(bitmap_path, &animation) == 0) {
-        fprintf(stderr, "Can't parse bitmap file %s\n", bitmap_path);
-        return animation;
+bool parse_gif(char *gif_path, struct Animation *animation) {
+    GifFileType *gif = DGifOpenFileName(gif_path, NULL);
+    if (gif == NULL || DGifSlurp(gif) != GIF_OK) {
+        fprintf(stderr, "Error reading GIF file %s.\n", gif_path);
+        return false;
     }
 
-    short *delays = malloc(sizeof(short) * animation.frames_count);
-    if (parse_durations(delays_path, &animation) == 0) {
-        fprintf(stderr, "Can't parse durations file %s\n", bitmap_path);
-        animation.frames = NULL;
+    uint16_t frame_count = gif->ImageCount;
+    animation->frames_count = frame_count;
+    animation->frames = calloc(frame_count, sizeof(struct Frame));
+
+    SavedImage *frames = gif->SavedImages;
+    GifColorType *colors = gif->SColorMap->Colors;
+    uint16_t delay = 3;
+
+    if (gif->SWidth != WIDTH || gif->SHeight != HEIGHT) {
+        fprintf(stderr, "Invalid GIF size %dx%d\n", gif->SWidth, gif->SHeight);
+        return false;
     }
 
-    free(delays);
-    return animation;
+    GifByteType bytes[HEIGHT * WIDTH] = {0};
+    for (uint16_t frame_index = 0; frame_index < frame_count; frame_index++) {
+        SavedImage imageframe = frames[frame_index];
+        GifImageDesc frame_desc = imageframe.ImageDesc;
+        uint8_t top = frame_desc.Top, left = frame_desc.Left;
+        uint8_t height = frame_desc.Height, width = frame_desc.Width;
+
+        // Setup animation frame
+        struct Frame *frame = &animation->frames[frame_index];
+        frame->duration = find_delay_time(&imageframe, delay);
+
+        for (uint16_t y = top, i = 0; y < top + height; y++) {
+            for (uint8_t x = left; x < left + width; x++) {
+                GifByteType color_index = imageframe.RasterBits[i++];
+                bytes[x + (y * 8)] = color_index;
+            }
+        }
+
+        for (uint8_t abs_y = 0; abs_y < HEIGHT; abs_y++) {
+            for (uint8_t x = 0; x < WIDTH; x++) {
+                GifByteType color_index = bytes[x + (abs_y * WIDTH)];
+                uint8_t r = MIN(convert_to_4bits(colors[color_index].Red), 11);
+                uint8_t g = convert_to_4bits(colors[color_index].Green);
+                uint8_t b = convert_to_4bits(colors[color_index].Blue);
+
+                uint8_t level = abs_y / 8;
+                uint8_t y = abs_y % 8;
+                for (uint8_t bit = 0; bit < 4; bit++) {
+                    frame->cube[bit][level][y] |= ((r >> bit) & 1) << (7 - x);
+                    frame->cube[bit][level][y + 8] |= ((g >> bit) & 1) << (7 - x);
+                    frame->cube[bit][level][y + 16] |= ((b >> bit) & 1) << (7 - x);
+                }
+            }
+        }
+    }
+
+    DGifCloseFile(gif, NULL);
+    return true;
 }

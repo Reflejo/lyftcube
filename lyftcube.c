@@ -1,16 +1,28 @@
+#include "animation.h"
 #include "GPIO.h"
-#include "parser.h"
 
 #include <sched.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+
+struct Animation animation;
 
 void terminate(int signal) {
     printf("Terminating LED cube ...\n");
     restore_gpios();
-    exit(0);
+    exit(EXIT_SUCCESS);
+}
+
+void restart(int signal) {
+    char path[PATH_MAX + 1];
+    if (!load_current_animation(&animation, path)) {
+        exit(EXIT_FAILURE);
+    }
+
+    printf("Loaded animation %s...\n", path);
 }
 
 int main(int argc, char *argv[]) {
@@ -19,10 +31,22 @@ int main(int argc, char *argv[]) {
 
     // Make sure we clean up the state after a CTRL+C
     signal(SIGINT, terminate);
+    signal(SIGTERM, terminate);
 
-    struct Animation animation = parse_animation("hola.bmp", "delays");
-    if (animation.frames == NULL) {
-        exit(1);
+    // Reload animation on SIGHUB
+    signal(SIGHUP, restart);
+
+    restart(0);
+    if (animation.frames == NULL || animation.frames_count == 0) {
+        fprintf(stderr, "Couldn't read animation file.\n");
+        return EXIT_FAILURE;
+    }
+
+    // We need root to access GPIOS and scheduler.
+    uid_t uid = getuid();
+    if (setuid(0) == -1) {
+        fprintf(stderr, "Incorrect binary permissions, (set 2750)\n");
+        return EXIT_FAILURE;
     }
 
     struct sched_param schedp;
@@ -31,9 +55,11 @@ int main(int argc, char *argv[]) {
 
     if (!initialize_gpios()) {
         printf("Initialization error\n");
-        return 1;
+        return EXIT_FAILURE;
     }
 
-    multiplex_levels(animation, pretend);
-    return 0;
+    setuid(uid);
+    multiplex(&animation, pretend);
+    free(animation.frames);
+    return EXIT_SUCCESS;
 }

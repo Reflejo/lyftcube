@@ -1,14 +1,18 @@
+#include "animation.h"
 #include "GPIO.h"
-#include "leds.h"
 #include "parser.h"
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
-#define DUTY_DELAY_NS       124
 
-const int levels[8] = {
+#define DUTY_DELAY_NS       124
+#define ANIMATION_FILE      "/opt/lyft/lyftcube/animations/current_animation"
+
+
+const uint8_t levels[8] = {
     LEVEL1, LEVEL2, LEVEL3, LEVEL4, LEVEL5, LEVEL6, LEVEL7, LEVEL8
 };
 
@@ -21,7 +25,37 @@ const int levels[8] = {
 /// - Turn red OFF while we cycle the second bit (2 passes)
 /// - Turn red OFF while we cycle the third bit (4 passes)
 /// - Turn red ON while we cycle the fourth bit (8 passes)
-static const int BAM[] = {0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3};
+static const uint8_t BAM[] = {0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3};
+
+bool load_current_animation(struct Animation *animation, char *path) {
+    FILE *file = fopen(ANIMATION_FILE, "r");
+    if (file == NULL) {
+        fprintf(stderr, "Can't open animation file %s", ANIMATION_FILE);
+        return false;
+    }
+
+    // Read current animation path from ANIMATION_FILE
+    char gif_path[PATH_MAX + 1];
+    if (fgets(gif_path, PATH_MAX, file) == NULL) {
+        fprintf(stderr, "Invalid animation path in %s", ANIMATION_FILE);
+        return false;
+    }
+
+    // Trim newlines from path.
+    char *pos;
+    if ((pos = strchr(gif_path, '\n')) != NULL) {
+        *pos = '\0';
+    }
+
+    animation->frames = NULL;
+    animation->frames_count = 0;
+    if (parse_gif(gif_path, animation) == 0) {
+        return false;
+    }
+
+    strcpy(path, gif_path);
+    return true;
+}
 
 /**
  * Performs given animation by multiplexing cube levels. It uses bit angle
@@ -31,19 +65,19 @@ static const int BAM[] = {0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3};
  * - parameter pretend:   When true we'll print on the screen every LED
  *                        level using a slowed-down BAM rate (debug only).
  */
-void multiplex_levels(struct Animation animation, bool pretend) {
-    printf("Frames count: %d\n", animation.frames_count);
-
-    int level = 0;
-    int BAM_index = 0;
-    int frame_index = 0;
+void multiplex(struct Animation *animation, bool pretend) {
+    uint8_t level = 0;
+    uint8_t BAM_index = 0;
+    uint32_t frame_index = 0;
+    uint32_t frame_count = animation->frames_count;
+    uint16_t frame_delay = 0;
 
     struct timespec sleep_time;
     sleep_time.tv_sec = pretend ? 1 : 0;
     sleep_time.tv_nsec = 1000 * (long)(DUTY_DELAY_NS);
 
     while (1) {
-        struct Frame *frame = &animation.frames[frame_index];
+        struct Frame *frame = &animation->frames[frame_index % frame_count];
         int bit = BAM[BAM_index];
 
         if (pretend) {
@@ -65,7 +99,11 @@ void multiplex_levels(struct Animation animation, bool pretend) {
 
             if (++BAM_index == 15) {
                 BAM_index = 0;
-                frame_index = (frame_index + 1) % animation.frames_count;
+
+                if (++frame_delay >= frame->duration) {
+                    frame_delay = 0;
+                    frame_index = (frame_index + 1) % frame_count;
+                }
             }
         }
 

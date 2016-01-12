@@ -13,9 +13,9 @@ void restore_gpios() {
 /**
  * Configures all GPIO modes and initial state.
  */
-int initialize_gpios() {
+bool initialize_gpios() {
     if (!bcm2835_init()) {
-        return 0;
+        return false;
     }
 
     // Set levels and ENABLE GPIOs mode to OUT
@@ -45,5 +45,5 @@ int initialize_gpios() {
     bcm2835_gpio_set(LEVEL7);
     bcm2835_gpio_set(LEVEL8);
     bcm2835_gpio_clr(ENABLE);
-    return 1;
+    return true;
 }

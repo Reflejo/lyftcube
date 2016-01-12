@@ -1,3 +1,5 @@
+.DS_Store
+
 # Object files
 *.o
 *.ko
@@ -23,6 +25,8 @@
 # Executables
 *.out
 lyftcube
+lyftcube-server
 
 # Debug files
 *.dSYM/
+animations/.fuse_hidden*
