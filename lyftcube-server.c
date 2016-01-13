@@ -10,13 +10,15 @@
 #define ANIMATIONS_PATH             "/opt/lyft/lyftcube/animations/"
 #define CURRENT_ANIMATION_FILE      ANIMATIONS_PATH "current_animation"
 #define MAX_UPLOAD_LENGTH           1024 * 1024 * 10
-#define MAX_RESPONSE                1024
+#define MAX_RESPONSE                2048
+#define MAX_FILES_LIST              100
 
+static char *error_response = "ERROR";
 
 struct Route {
     const char *method;
     const char *uri;
-    bool (*function)(ad_http_t *http, char *name, char *response);
+    bool (*function)(ad_http_t *http, char *name, char **body, size_t *size);
 };
 
 // ----------- Helper functions -----------
@@ -44,7 +46,7 @@ off_t animation_size(char *name) {
 
 // ----------- HTTP route functions -----------
 
-bool list_animations(ad_http_t *http, char *name, char *response) {
+bool list_animations(ad_http_t *http, char *name, char **body, size_t *size) {
     printf("Listing animations on %s\n", ANIMATIONS_PATH);
 
     DIR *directory = opendir(ANIMATIONS_PATH);
@@ -52,30 +54,52 @@ bool list_animations(ad_http_t *http, char *name, char *response) {
         return false;
     }
 
-    struct dirent *entity;
-    size_t total_size = 0;
-    while ((entity = readdir(directory)) != NULL) {
-        size_t name_len = strlen(entity->d_name);
-        if (total_size + name_len + 5 > MAX_RESPONSE) {
+    *size = 0;
+    *body = calloc(sizeof(char), MAX_FILES_LIST * PATH_MAX);
+    for (uint8_t i = 0; i < MAX_FILES_LIST; i++) {
+        struct dirent *entity = readdir(directory);
+        if (entity == NULL) {
             break;
         }
 
+        size_t name_len = strlen(entity->d_name);
         if (name_len > 4 && !strcmp(entity->d_name + name_len - 4, ".gif")) {
             char animation[name_len - 3];
             snprintf(animation, name_len - 3, "%s", entity->d_name);
 
-            int total = sprintf(response + total_size, "%s,%jd\n",
-                                animation, animation_size(animation));
-            total_size += total;
+            int total = sprintf(*body + *size, "%s,%s,%jd\n",
+                animation, animation, animation_size(animation));
+            *size += total;
         }
     }
 
-    response[total_size - 1] = '\0';
     closedir(directory);
     return true;
 }
 
-bool play_animation(ad_http_t *http, char *name, char *response) {
+bool animation(ad_http_t *http, char *name, char **body, size_t *size) {
+    if (name == NULL) {
+        return list_animations(http, name, body, size);
+    }
+
+    FILE *file = fopen(animation_path(name), "rb");
+    if (file == NULL) {
+        return false;
+    }
+
+    fseek(file, 0L, SEEK_END);
+    size_t file_size = ftell(file);
+    rewind(file);
+
+    *body = malloc(sizeof(char) * file_size);
+    *size = file_size;
+
+    fread(*body, 1, file_size, file);
+    fclose(file);
+    return true;
+}
+
+bool play_animation(ad_http_t *http, char *name, char **body, size_t *size) {
     char *path = animation_path(name);
     if (path == NULL) {
         printf("Invalid animation name given\n");
@@ -93,11 +117,15 @@ bool play_animation(ad_http_t *http, char *name, char *response) {
     fclose(file);
 
     system("killall -HUP lyftcube");
-    strcpy(response, "OK");
+
+    *size = strlen(name);
+    *body = calloc(sizeof(char), *size + 1);
+    memcpy(*body, name, *size);
+
     return true;
 }
 
-bool upload(ad_http_t *http, char *name, char *response) {
+bool upload(ad_http_t *http, char *name, char **body, size_t *size) {
     if (http->request.bodyin > MAX_UPLOAD_LENGTH) {
         return false;
     }
@@ -110,12 +138,12 @@ bool upload(ad_http_t *http, char *name, char *response) {
 
     printf("Upload animation %s (sized %zu)...\n", path, http->request.bodyin);
 
-    char body[http->request.bodyin];
-    evbuffer_copyout(http->request.inbuf, body, http->request.bodyin);
-    fwrite(body, 1, http->request.bodyin, file);
+    char data[http->request.bodyin];
+    evbuffer_copyout(http->request.inbuf, data, http->request.bodyin);
+    fwrite(data, 1, http->request.bodyin, file);
     fclose(file);
 
-    return play_animation(http, name, response);
+    return play_animation(http, name, body, size);
 }
 
 // ----------- Handler -----------
@@ -126,7 +154,8 @@ int api_handler(short event, ad_conn_t *conn, void *userdata) {
         struct Route *routes = (struct Route *)userdata;
         ad_http_t *http = (ad_http_t *)ad_conn_get_extra(conn);
         bool response_ok = false;
-        char response[MAX_RESPONSE] = "ERROR";
+        char *body = error_response;
+        size_t body_size = 0;
 
         for (uint8_t i = 0; i < 3; i++) {
             struct Route route = routes[i];
@@ -134,15 +163,22 @@ int api_handler(short event, ad_conn_t *conn, void *userdata) {
             if (strcmp(route.method, http->request.method) == 0 &&
                 strncmp(route.uri, http->request.uri, uri_len) == 0)
             {
-                response_ok = route.function(http, &http->request.uri[uri_len],
-                                             response);
+                char *name = strlen(http->request.uri) > uri_len ?
+                    &http->request.uri[uri_len] : NULL;
+                if (name != NULL) {
+                    qstrreplace("sr", name, "%20", " ");
+                }
+
+                response_ok = route.function(http, name, &body, &body_size);
                 break;
             }
         }
 
-
         int code = response_ok ? 200 : 500;
-        ad_http_response(conn, code, "text/plain", response, strlen(response));
+        ad_http_response(conn, code, "text/plain", body, body_size);
+        if (body != error_response) {
+            free(body);
+        }
 
         return AD_CLOSE;
     }
@@ -156,7 +192,7 @@ int main(int argc, char **argv) {
     struct Route routes[3] = {
         {"POST", "/animation/upload/", upload},
         {"POST", "/animation/play/", play_animation},
-        {"GET", "/animation/", list_animations},
+        {"GET", "/animation/", animation},
     };
 
     ad_server_t *server = ad_server_new();
