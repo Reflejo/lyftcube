@@ -1,4 +1,3 @@
-#include <asyncd/asyncd.h>
 #include <dirent.h>
 #include <fcntl.h>
 #include <linux/limits.h>
@@ -6,6 +5,9 @@
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
+
+#include "endpoints.h"
 
 #define ANIMATIONS_PATH             "/opt/lyft/lyftcube/animations/"
 #define CURRENT_ANIMATION_FILE      ANIMATIONS_PATH "current_animation"
@@ -13,15 +15,6 @@
 #define MAX_RESPONSE                2048
 #define MAX_FILES_LIST              100
 
-static char *error_response = "ERROR";
-
-struct Route {
-    const char *method;
-    const char *uri;
-    bool (*function)(ad_http_t *http, char *name, char **body, size_t *size);
-};
-
-// ----------- Helper functions -----------
 
 char *animation_path(char *name) {
     static char path[PATH_MAX];
@@ -82,7 +75,8 @@ bool animation(ad_http_t *http, char *name, char **body, size_t *size) {
         return list_animations(http, name, body, size);
     }
 
-    FILE *file = fopen(animation_path(name), "rb");
+    char *path = animation_path(name);
+    FILE *file = fopen(path, "rb");
     if (file == NULL) {
         return false;
     }
@@ -90,6 +84,8 @@ bool animation(ad_http_t *http, char *name, char **body, size_t *size) {
     fseek(file, 0L, SEEK_END);
     size_t file_size = ftell(file);
     rewind(file);
+
+    printf("Returning animation %s (size: %d)\n", path, file_size);
 
     *body = malloc(sizeof(char) * file_size);
     *size = file_size;
@@ -144,60 +140,4 @@ bool upload(ad_http_t *http, char *name, char **body, size_t *size) {
     fclose(file);
 
     return play_animation(http, name, body, size);
-}
-
-// ----------- Handler -----------
-
-int api_handler(short event, ad_conn_t *conn, void *userdata) {
-    if (event & AD_EVENT_READ && ad_http_get_status(conn) == AD_HTTP_REQ_DONE)
-    {
-        struct Route *routes = (struct Route *)userdata;
-        ad_http_t *http = (ad_http_t *)ad_conn_get_extra(conn);
-        bool response_ok = false;
-        char *body = error_response;
-        size_t body_size = 0;
-
-        for (uint8_t i = 0; i < 3; i++) {
-            struct Route route = routes[i];
-            size_t uri_len = strlen(route.uri);
-            if (strcmp(route.method, http->request.method) == 0 &&
-                strncmp(route.uri, http->request.uri, uri_len) == 0)
-            {
-                char *name = strlen(http->request.uri) > uri_len ?
-                    &http->request.uri[uri_len] : NULL;
-                if (name != NULL) {
-                    qstrreplace("sr", name, "%20", " ");
-                }
-
-                response_ok = route.function(http, name, &body, &body_size);
-                break;
-            }
-        }
-
-        int code = response_ok ? 200 : 500;
-        ad_http_response(conn, code, "text/plain", body, body_size);
-        if (body != error_response) {
-            free(body);
-        }
-
-        return AD_CLOSE;
-    }
-
-    return AD_OK;
-}
-
-// ----------- Main -----------
-
-int main(int argc, char **argv) {
-    struct Route routes[3] = {
-        {"POST", "/animation/upload/", upload},
-        {"POST", "/animation/play/", play_animation},
-        {"GET", "/animation/", animation},
-    };
-
-    ad_server_t *server = ad_server_new();
-    ad_server_set_option(server, "server.port", "1337");
-    ad_server_register_hook(server, ad_http_handler, NULL);
-    ad_server_register_hook(server, api_handler, &routes);
-    return ad_server_start(server);
 }

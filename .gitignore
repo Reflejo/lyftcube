@@ -30,3 +30,4 @@ lyftcube-server
 # Debug files
 *.dSYM/
 animations/.fuse_hidden*
+animations/

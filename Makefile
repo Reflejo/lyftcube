@@ -7,7 +7,8 @@ EXECUTABLE 	= lyftcube
 SOURCES 	= lyftcube.c GPIO.c animation.c parser.c
 OBJECTS 	= $(SOURCES:.c=.o)
 
-all: $(EXECUTABLE) permissions lyftcube-server
+all: $(EXECUTABLE) permissions
+	@cd server; make
 
 %.o: %.c $(DEPS)
 	$(CC) $(CFLAGS) -c -o $@ $<
@@ -19,8 +20,6 @@ permissions:
 	$(SUDO) chown root $(EXECUTABLE)
 	$(SUDO) chmod 4750 $(EXECUTABLE)
 
-lyftcube-server: lyftcube-server.c
-	$(CC) -o $@ $^ $(CFLAGS) -lasyncd -lssl -levent -lqlibc -levent_openssl -D_FILE_OFFSET_BITS=64
-
 clean:
-	rm -rf *.o lyftcube-server $(EXECUTABLE)
+	rm -rf *.o $(EXECUTABLE)
+	@cd server; make clean

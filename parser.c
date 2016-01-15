@@ -21,7 +21,8 @@ char *binary(int n) {
 }
 
 uint8_t convert_to_4bits(int component) {
-    return MIN(ceil(component / 2.0), 0b1111);
+    double percent = (double)component / 255.0;
+    return MIN(ceil(0b11111 * percent), 0b1111);
 }
 
 uint16_t find_delay_time(SavedImage *image, int previous_delay) {
@@ -78,7 +79,6 @@ bool parse_gif(char *gif_path, struct Animation *animation) {
     animation->frames = calloc(frame_count, sizeof(struct Frame));
 
     SavedImage *frames = gif->SavedImages;
-    GifColorType *colors = gif->SColorMap->Colors;
     uint16_t delay = 3;
 
     if (gif->SWidth != WIDTH || gif->SHeight != HEIGHT) {
@@ -104,6 +104,8 @@ bool parse_gif(char *gif_path, struct Animation *animation) {
             }
         }
 
+        ColorMapObject *colorMap = frame_desc.ColorMap ?: gif->SColorMap;
+        GifColorType *colors = colorMap->Colors;
         for (uint8_t abs_y = 0; abs_y < HEIGHT; abs_y++) {
             for (uint8_t x = 0; x < WIDTH; x++) {
                 GifByteType color_index = bytes[x + (abs_y * WIDTH)];

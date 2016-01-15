@@ -69,7 +69,7 @@ void multiplex(struct Animation *animation, bool pretend) {
     uint8_t level = 0;
     uint8_t BAM_index = 0;
     uint32_t frame_index = 0;
-    uint32_t frame_count = animation->frames_count;
+    uint32_t *frame_count = &animation->frames_count;
     uint16_t frame_delay = 0;
 
     struct timespec sleep_time;
@@ -77,7 +77,7 @@ void multiplex(struct Animation *animation, bool pretend) {
     sleep_time.tv_nsec = 1000 * (long)(DUTY_DELAY_NS);
 
     while (1) {
-        struct Frame *frame = &animation->frames[frame_index % frame_count];
+        struct Frame *frame = &animation->frames[frame_index % *frame_count];
         int bit = BAM[BAM_index];
 
         if (pretend) {
@@ -102,7 +102,7 @@ void multiplex(struct Animation *animation, bool pretend) {
 
                 if (++frame_delay >= frame->duration) {
                     frame_delay = 0;
-                    frame_index = (frame_index + 1) % frame_count;
+                    frame_index = (frame_index + 1) % *frame_count;
                 }
             }
         }
