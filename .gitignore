@@ -27,10 +27,36 @@
 
 # Executables
 *.out
-lyftcube
-lyftcube-server
+cube/lyftcube
+cube/server/lyftcube-server
 
 # Debug files
 *.dSYM/
-animations/.fuse_hidden*
-animations/
+cube/animations/.fuse_hidden*
+cube/animations/
+
+# Xcode
+build/
+DerivedData
+output/
+
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+xcuserdata
+*.xccheckout
+*.moved-aside
+*.hmap
+*.ipa
+*.xcuserstate
+*.xcscmblueprint
+
+# iOS
+CubeDesigner-iOS/LyftCubeDesigner.xcworkspace
+CubeDesigner-iOS/Pods/
+CubeDesigner-iOS/LyftCubeDesigner/Animations
