@@ -1,0 +1,10 @@
+platform :ios, "8.0"
+workspace "LyftCubeDesigner"
+
+use_frameworks!
+
+xcodeproj 'LyftCubeDesigner.xcodeproj'
+
+pod 'SVProgressHUD', :head
+pod 'ClosureKit', :git => "https://github.com/Reflejo/ClosureKit"
+pod 'Alamofire'
