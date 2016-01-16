@@ -68,9 +68,12 @@ void dump_buffer(unsigned char *buffer) {
  *                            levels one on top of each other.
  */
 bool parse_gif(char *gif_path, struct Animation *animation) {
-    GifFileType *gif = DGifOpenFileName(gif_path, NULL);
+    int error = 666;
+    GifFileType *gif = DGifOpenFileName(gif_path, &error);
     if (gif == NULL || DGifSlurp(gif) != GIF_OK) {
-        fprintf(stderr, "Error reading GIF file %s.\n", gif_path);
+        fprintf(stderr, "Error reading GIF file %s (%d).\n", gif_path, error);
+
+        DGifCloseFile(gif, NULL);
         return false;
     }
 
@@ -83,6 +86,7 @@ bool parse_gif(char *gif_path, struct Animation *animation) {
 
     if (gif->SWidth != WIDTH || gif->SHeight != HEIGHT) {
         fprintf(stderr, "Invalid GIF size %dx%d\n", gif->SWidth, gif->SHeight);
+        DGifCloseFile(gif, NULL);
         return false;
     }
 

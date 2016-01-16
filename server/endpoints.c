@@ -37,6 +37,13 @@ off_t animation_size(char *name) {
     return stats.st_size;
 }
 
+bool return_ok(char **body, size_t *size) {
+    *size = 3;
+    *body = calloc(sizeof(char), *size);
+    strcpy(*body, "OK");
+    return true;
+}
+
 // ----------- HTTP route functions -----------
 
 bool list_animations(ad_http_t *http, char *name, char **body, size_t *size) {
@@ -140,4 +147,18 @@ bool upload(ad_http_t *http, char *name, char **body, size_t *size) {
     fclose(file);
 
     return play_animation(http, name, body, size);
+}
+
+bool start(ad_http_t *http, char *name, char **body, size_t *size) {
+    system("sudo /etc/init.d/lyftcube start");
+    printf("Starting lyftcube ...\n");
+
+    return return_ok(body, size);
+}
+
+bool stop(ad_http_t *http, char *name, char **body, size_t *size) {
+    system("sudo /etc/init.d/lyftcube stop");
+    printf("Shutting down lyftcube ...\n");
+
+    return return_ok(body, size);
 }

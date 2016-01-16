@@ -27,6 +27,15 @@ const uint8_t levels[8] = {
 /// - Turn red ON while we cycle the fourth bit (8 passes)
 static const uint8_t BAM[] = {0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3};
 
+/**
+ * Parses the animation that should be played next based on the content of the
+ * file at `ANIMATION_FILE`. The content of the new animation struct will be
+ * stored into the given animation pointer.
+ *
+ * - parameter animation: The pointer where the parsed animation will be stored
+ * - parameter path:      A pointer that will contain the path of the loaded
+ *                        animation when the parsing is successful.
+ */
 bool load_current_animation(struct Animation *animation, char *path) {
     FILE *file = fopen(ANIMATION_FILE, "r");
     if (file == NULL) {

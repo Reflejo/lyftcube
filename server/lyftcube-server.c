@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include "endpoints.h"
 
+#define ROUTES_COUNT    5
+
 static char *error_response = "ERROR";
 
 struct Route {
@@ -22,7 +24,7 @@ int api_handler(short event, ad_conn_t *conn, void *userdata) {
         char *body = error_response;
         size_t body_size = 5;
 
-        for (uint8_t i = 0; i < 3; i++) {
+        for (uint8_t i = 0; i < ROUTES_COUNT; i++) {
             struct Route route = routes[i];
             size_t uri_len = strlen(route.uri);
             if (strcmp(route.method, http->request.method) == 0 &&
@@ -54,10 +56,12 @@ int api_handler(short event, ad_conn_t *conn, void *userdata) {
 // ----------- Main -----------
 
 int main(int argc, char **argv) {
-    struct Route routes[3] = {
+    struct Route routes[ROUTES_COUNT] = {
         {"POST", "/animation/upload/", upload},
         {"POST", "/animation/play/", play_animation},
         {"GET", "/animation/", animation},
+        {"POST", "/start", start},
+        {"POST", "/stop", stop},
     };
 
     ad_server_t *server = ad_server_new();

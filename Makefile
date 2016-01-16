@@ -17,7 +17,7 @@ $(EXECUTABLE):: $(OBJECTS) $(HEADERS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 permissions: 
-	$(SUDO) chown root $(EXECUTABLE)
+	$(SUDO) chown root:lyftcube $(EXECUTABLE)
 	$(SUDO) chmod 4750 $(EXECUTABLE)
 
 clean:

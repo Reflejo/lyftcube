@@ -51,6 +51,15 @@ extern const uint8_t levels[8];
  */
 void multiplex(struct Animation *animation, bool pretend);
 
+/**
+ * Parses the animation that should be played next based on the content of the
+ * file at `ANIMATION_FILE`. The content of the new animation struct will be
+ * stored into the given animation pointer.
+ *
+ * - parameter animation: The pointer where the parsed animation will be stored
+ * - parameter path:      A pointer that will contain the path of the loaded
+ *                        animation when the parsing is successful.
+ */
 bool load_current_animation(struct Animation *animation, char *path);
 
 #endif
