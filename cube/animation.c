@@ -82,6 +82,7 @@ void multiplex(struct Animation *animation, bool pretend) {
     uint32_t frame_index = 0;
     uint32_t *frame_count = &animation->frames_count;
     uint16_t frame_delay = 0;
+    char empty_buffer[8] = {0};
 
     struct timespec sleep_time;
     sleep_time.tv_sec = pretend ? 1 : 0;
@@ -95,6 +96,10 @@ void multiplex(struct Animation *animation, bool pretend) {
             printf("=========== bit: %d, level: %d ============\n", bit, level);
             dump_buffer(frame->cube[bit][level]);
         } else {
+            // This next line is a workaround for what I think is a sync
+            // problem with SDI and the DM13A chip.
+            bcm2835_spi_writenb(empty_buffer, 8);
+
             bcm2835_spi_writenb((char *)frame->cube[bit][level], 24);
 
             // Turn off previous level and turn on the current one.
