@@ -9,7 +9,7 @@ static char *error_response = "ERROR";
 struct Route {
     const char *method;
     const char *uri;
-    bool (*function)(ad_http_t *http, char *name, char **body, size_t *size);
+    bool (*function)(ad_http_t *http, char *id, char **body, size_t *size);
 };
 
 
@@ -30,13 +30,13 @@ int api_handler(short event, ad_conn_t *conn, void *userdata) {
             if (strcmp(route.method, http->request.method) == 0 &&
                 strncmp(route.uri, http->request.uri, uri_len) == 0)
             {
-                char *name = strlen(http->request.uri) > uri_len ?
+                char *id = strlen(http->request.uri) > uri_len ?
                     &http->request.uri[uri_len] : NULL;
-                if (name != NULL) {
-                    qstrreplace("sr", name, "%20", " ");
+                if (id != NULL) {
+                    qstrreplace("sr", id, "%20", " ");
                 }
 
-                response_ok = route.function(http, name, &body, &body_size);
+                response_ok = route.function(http, id, &body, &body_size);
                 break;
             }
         }

@@ -46,7 +46,7 @@ bool return_ok(char **body, size_t *size) {
 
 // ----------- HTTP route functions -----------
 
-bool list_animations(ad_http_t *http, char *name, char **body, size_t *size) {
+bool list_animations(ad_http_t *http, char *id, char **body, size_t *size) {
     printf("Listing animations on %s\n", ANIMATIONS_PATH);
 
     DIR *directory = opendir(ANIMATIONS_PATH);
@@ -77,12 +77,12 @@ bool list_animations(ad_http_t *http, char *name, char **body, size_t *size) {
     return true;
 }
 
-bool animation(ad_http_t *http, char *name, char **body, size_t *size) {
-    if (name == NULL) {
-        return list_animations(http, name, body, size);
+bool animation(ad_http_t *http, char *id, char **body, size_t *size) {
+    if (id == NULL) {
+        return list_animations(http, id, body, size);
     }
 
-    char *path = animation_path(name);
+    char *path = animation_path(id);
     FILE *file = fopen(path, "rb");
     if (file == NULL) {
         return false;
@@ -102,10 +102,10 @@ bool animation(ad_http_t *http, char *name, char **body, size_t *size) {
     return true;
 }
 
-bool play_animation(ad_http_t *http, char *name, char **body, size_t *size) {
-    char *path = animation_path(name);
+bool play_animation(ad_http_t *http, char *id, char **body, size_t *size) {
+    char *path = animation_path(id);
     if (path == NULL) {
-        printf("Invalid animation name given\n");
+        printf("Invalid animation id given\n");
         return false;
     }
 
@@ -121,9 +121,9 @@ bool play_animation(ad_http_t *http, char *name, char **body, size_t *size) {
 
     system("killall -HUP lyftcube");
 
-    *size = strlen(name);
+    *size = strlen(id);
     *body = calloc(sizeof(char), *size + 1);
-    memcpy(*body, name, *size);
+    memcpy(*body, id, *size);
 
     return true;
 }
@@ -149,14 +149,14 @@ bool upload(ad_http_t *http, char *name, char **body, size_t *size) {
     return play_animation(http, name, body, size);
 }
 
-bool start(ad_http_t *http, char *name, char **body, size_t *size) {
+bool start(ad_http_t *http, char *id, char **body, size_t *size) {
     system("sudo /etc/init.d/lyftcube start");
     printf("Starting lyftcube ...\n");
 
     return return_ok(body, size);
 }
 
-bool stop(ad_http_t *http, char *name, char **body, size_t *size) {
+bool stop(ad_http_t *http, char *id, char **body, size_t *size) {
     system("sudo /etc/init.d/lyftcube stop");
     printf("Shutting down lyftcube ...\n");
 
