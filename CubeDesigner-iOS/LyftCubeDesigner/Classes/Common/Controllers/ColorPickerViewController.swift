@@ -1,5 +1,4 @@
 import UIKit
-import PKHUD
 
 private let kReuseIdentifierCell = "colorCell"
 private let kDefaultTotalColors = 60
