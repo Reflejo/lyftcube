@@ -8,23 +8,25 @@
 #include <time.h>
 
 
-#define DUTY_DELAY_NS       124
-#define ANIMATION_FILE      "/opt/lyft/lyftcube/animations/current_animation"
+#define DUTY_DELAY_NS    124
+#define ANIMATION_FILE   "/opt/lyft/lyftcube/cube/animations/current_animation"
 
 
 const uint8_t levels[8] = {
     LEVEL1, LEVEL2, LEVEL3, LEVEL4, LEVEL5, LEVEL6, LEVEL7, LEVEL8
 };
 
-/// Bit angle modulation works this way: we set a brightness between [0, 15]
-/// (4 bits), each bit of that number defines if the color should be on for
-/// that bit or not; then we cycle the bit positions following this array,
-///
-/// For example if brightness on red is 9 (binary: 1001) we'll:
-/// - Turn red ON while we cycle the first bit (1 pass)
-/// - Turn red OFF while we cycle the second bit (2 passes)
-/// - Turn red OFF while we cycle the third bit (4 passes)
-/// - Turn red ON while we cycle the fourth bit (8 passes)
+/** Bit angle modulation works this way: we set a brightness between [0, 15]
+ *  (4 bits), each bit of that number defines if the color should be on for
+ *  that bit cycle or not; then we move to the bit positions defined in 
+ *  this array,
+ *
+ *  For example if brightness on red is 9 (binary: 1001) we'll:
+ *  - Turn red ON while we cycle the first bit (1 pass)
+ *  - Turn red OFF while we cycle the second bit (2 passes)
+ *  - Turn red OFF while we cycle the third bit (4 passes)
+ *  - Turn red ON while we cycle the fourth bit (8 passes)
+ */
 static const uint8_t BAM[] = {0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3};
 
 /**
@@ -106,7 +108,7 @@ void multiplex(struct Animation *animation, bool pretend) {
         if (++level == 8) {
             level = 0;
 
-            if (++BAM_index == 15) {
+            if (++BAM_index == 0b1111) {
                 BAM_index = 0;
 
                 if (++frame_delay >= frame->duration) {

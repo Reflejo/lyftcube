@@ -22,7 +22,7 @@ char *binary(int n) {
 
 uint8_t convert_to_4bits(int component) {
     double percent = (double)component / 255.0;
-    return MIN(ceil(0b11111 * percent), 0b1111);
+    return MIN(ceil(0b1111 * percent), 0b1111);
 }
 
 uint16_t find_delay_time(SavedImage *image, int previous_delay) {

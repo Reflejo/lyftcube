@@ -9,7 +9,7 @@
 
 #include "endpoints.h"
 
-#define ANIMATIONS_PATH             "/opt/lyft/lyftcube/animations/"
+#define ANIMATIONS_PATH             "/opt/lyft/lyftcube/cube/animations/"
 #define CURRENT_ANIMATION_FILE      ANIMATIONS_PATH "current_animation"
 #define MAX_UPLOAD_LENGTH           1024 * 1024 * 10
 #define MAX_RESPONSE                2048
