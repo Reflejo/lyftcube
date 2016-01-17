@@ -18,8 +18,8 @@ const uint8_t levels[8] = {
 
 /** Bit angle modulation works this way: we set a brightness between [0, 15]
  *  (4 bits), each bit of that number defines if the color should be on for
- *  that bit cycle or not; then we move to the bit positions defined in 
- *  this array,
+ *  that bit cycle or not; when the cycle is over, we move to the next bit
+ *  position according to the following array,
  *
  *  For example if brightness on red is 9 (binary: 1001) we'll:
  *  - Turn red ON while we cycle the first bit (1 pass)
