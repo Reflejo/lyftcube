@@ -110,7 +110,8 @@ struct Animation {
             }
         }
 
-        let filePath = "\(path)/\(self.name).gif"
+        let animationName = self.name ?? "Unsaved"
+        let filePath = "\(path)/\(animationName).gif"
         gif.save(filePath)
         return NSURL(fileURLWithPath: filePath)
     }
