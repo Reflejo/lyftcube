@@ -5,7 +5,7 @@ use_frameworks!
 
 xcodeproj 'LyftCubeDesigner.xcodeproj'
 
-pod 'SVProgressHUD', :head
-pod 'ClosureKit', :git => "https://github.com/Reflejo/ClosureKit"
 pod 'Alamofire'
+pod 'ClosureKit', :git => "https://github.com/Reflejo/ClosureKit"
 pod 'SCLAlertView'
+pod 'SVProgressHUD', :head
