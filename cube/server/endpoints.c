@@ -162,3 +162,9 @@ bool stop(ad_http_t *http, char *id, char **body, size_t *size) {
 
     return return_ok(body, size);
 }
+
+bool delete(ad_http_t *http, char *id, char **body, size_t *size) {
+    char *path = animation_path(id);
+    printf("Removing animation at %s ...\n", path);
+    return remove(path) != -1;
+}

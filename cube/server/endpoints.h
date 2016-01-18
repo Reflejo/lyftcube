@@ -48,3 +48,8 @@ bool start(ad_http_t *http, char *id, char **body, size_t *size);
  * Shut downs the cube daemon. If it's not running this is a nop.
  */
 bool stop(ad_http_t *http, char *id, char **body, size_t *size);
+
+/**
+ * Removes animation identified by the given animation ID
+ */
+bool delete(ad_http_t *http, char *id, char **body, size_t *size);

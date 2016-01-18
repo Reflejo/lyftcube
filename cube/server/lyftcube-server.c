@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include "endpoints.h"
 
-#define ROUTES_COUNT    5
+#define ROUTES_COUNT    6
 
 static char *error_response = "ERROR";
 
@@ -62,6 +62,7 @@ int main(int argc, char **argv) {
         {"GET", "/animation/", animation},
         {"POST", "/start", start},
         {"POST", "/stop", stop},
+        {"DELETE", "/animation/", delete},
     };
 
     ad_server_t *server = ad_server_new();
