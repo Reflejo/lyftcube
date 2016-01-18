@@ -4,6 +4,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define MIN(X,Y) ((X) < (Y) ? (X) : (Y))
 #define HEIGHT      64
@@ -68,10 +69,12 @@ void dump_buffer(unsigned char *buffer) {
  *                            levels one on top of each other.
  */
 bool parse_gif(char *gif_path, struct Animation *animation) {
-    int error = 666;
+    int error = 0;
     GifFileType *gif = DGifOpenFileName(gif_path, &error);
     if (gif == NULL || DGifSlurp(gif) != GIF_OK) {
-        fprintf(stderr, "Error reading GIF file %s (%d).\n", gif_path, error);
+        error = gif == NULL ? error : gif->Error;
+        fprintf(stderr, "Error reading GIF file %s (%s).\n", gif_path,
+                GifErrorString(error));
 
         DGifCloseFile(gif, NULL);
         return false;

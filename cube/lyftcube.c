@@ -18,6 +18,10 @@ void terminate(int signal) {
 
 void restart(int signal) {
     char path[PATH_MAX + 1];
+    if (animation.frames != NULL) {
+        free(animation.frames);
+    }
+
     if (!load_current_animation(&animation, path)) {
         restore_gpios();
         exit(EXIT_FAILURE);
