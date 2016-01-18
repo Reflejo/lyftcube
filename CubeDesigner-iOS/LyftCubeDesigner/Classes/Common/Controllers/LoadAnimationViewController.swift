@@ -71,9 +71,14 @@ extension LoadAnimationViewController: UITableViewDelegate, UITableViewDataSourc
     func tableView(tableView: UITableView, commitEditingStyle editingStyle: UITableViewCellEditingStyle,
         forRowAtIndexPath indexPath: NSIndexPath)
     {
+        let animation = self.animations.removeAtIndex(indexPath.row)
         tableView.deleteRowsAtIndexPaths([indexPath], withRowAnimation: .Automatic)
 
-        if let path = self.animations.removeAtIndex(indexPath.row).path {
+        if let animationID = animation.id {
+            LyftCubeAPI.removeAnimation(animationID)
+        }
+
+        if let path = animation.path {
             _ = try? NSFileManager.defaultManager().removeItemAtPath(path)
         }
     }

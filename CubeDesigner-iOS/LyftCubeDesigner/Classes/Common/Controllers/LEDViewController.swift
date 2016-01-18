@@ -161,7 +161,7 @@ final class LEDViewController: UIViewController {
         self.cube.frame = 0
         self.cube.animation = animation
         self.slider.maximumValue = Float(self.cube.framesCount)
-        self.nameLabel.text = animation.name
+        self.nameLabel.text = animation.name ?? "Unsaved"
         self.setShowState(.Active)
         self.frameDidChange(0, isAnimating: true)
     }
@@ -185,7 +185,7 @@ final class LEDViewController: UIViewController {
 extension LEDViewController: LEDCubeViewDelegate {
 
     override func motionEnded(motion: UIEventSubtype, withEvent event: UIEvent?) {
-        var animation = Animation(name: "Unsaved")
+        var animation = Animation()
         animation.frames = [LEDCubeFrame()]
         self.loadAnimation(animation)
     }

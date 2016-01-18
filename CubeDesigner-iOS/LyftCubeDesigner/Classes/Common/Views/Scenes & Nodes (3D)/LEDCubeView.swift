@@ -84,9 +84,6 @@ final class LEDCubeView: SCNView {
             self.addGestureRecognizer(swipeGesture)
         }
 
-        let zoomGesture = UIPinchGestureRecognizer(target: self, action: "pinchGesture:")
-        self.addGestureRecognizer(zoomGesture)
-
         let tapGesture = UITapGestureRecognizer(target: self, action: "tapGesture:")
         self.addGestureRecognizer(tapGesture)
 

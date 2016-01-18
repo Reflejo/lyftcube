@@ -20,15 +20,28 @@ struct LyftCubeAPI {
     }
 
     /**
+     Removes animation identified by the given animation ID
+
+     - parameter animationID: The unique identifier of the animation to remove
+     */
+    static func removeAnimation(animationID: String) {
+        self.manager.request(.DELETE, APIRoute.Animation(id: animationID))
+    }
+
+    /**
      Upload animation GIF file to the cube. Note that this will also play the animation once uploaded.
 
      - parameter animation:  The animation to upload & play
      - parameter completion: A completion closure that will be called either on success or failure.
      */
     static func uploadAnimation(animation: Animation, completion: (id: String?) -> Void) {
+        guard let animationName = animation.name where !animationName.isEmpty else {
+            return completion(id: nil)
+        }
+
         let directory = NSURL(fileURLWithPath: NSTemporaryDirectory())
         animation.saveTo(directory.path!) { filePath in
-            self.manager.upload(.POST, APIRoute.Upload(name: animation.name), file: filePath)
+            self.manager.upload(.POST, APIRoute.Upload(name: animationName), file: filePath)
                 .response { request, _, data, error in
                     guard error == nil, let data = data,
                         id = String(data: data, encoding: NSUTF8StringEncoding) else

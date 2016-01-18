@@ -27,7 +27,7 @@ struct Animation {
     var path: String?
 
     /// The animation's name (use a string that describes the animation).
-    var name: String
+    var name: String?
 
     /// The type of the animation (see `AnimationEntryType` for more information)
     var type: AnimationType
@@ -41,7 +41,7 @@ struct Animation {
     /// The estimated file size of the GIF file.
     var fileSize: UInt64?
 
-    init(name: String, type: AnimationType = .Fixed, fileSize: UInt64? = nil, id: String? = nil) {
+    init(name: String? = nil, type: AnimationType = .Fixed, fileSize: UInt64? = nil, id: String? = nil) {
         self.id = id
         self.name = name
         self.type = type

@@ -19,7 +19,7 @@ final class LEDCube: SCNNode {
     weak var delegate: LEDCubeDelegate?
 
     /// The animation struct holding all the frames with colors
-    var animation = Animation(name: "Unsaved") {
+    var animation = Animation() {
         didSet { self.loadColors(self.animation.frames[self.frame].colors) }
     }
 
