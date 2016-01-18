@@ -123,9 +123,9 @@ bool parse_gif(char *gif_path, struct Animation *animation) {
                 uint8_t level = abs_y / 8;
                 uint8_t y = abs_y % 8;
                 for (uint8_t bit = 0; bit < 4; bit++) {
-                    frame->cube[bit][level][y] |= ((r >> bit) & 1) << (7 - x);
-                    frame->cube[bit][level][y + 8] |= ((g >> bit) & 1) << (7 - x);
-                    frame->cube[bit][level][y + 16] |= ((b >> bit) & 1) << (7 - x);
+                    frame->cube[bit][level][y] |= ((r >> bit) & 1) << x;
+                    frame->cube[bit][level][y + 8] |= ((g >> bit) & 1) << x;
+                    frame->cube[bit][level][y + 16] |= ((b >> bit) & 1) << x;
                 }
             }
         }
