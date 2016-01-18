@@ -1,11 +1,13 @@
 PODS:
   - Alamofire (3.1.4)
   - ClosureKit (0.0.1)
-  - SVProgressHUD (HEAD based on 2.0-beta)
+  - SCLAlertView (0.4.3)
+  - SVProgressHUD (HEAD based on 2.0-beta2)
 
 DEPENDENCIES:
   - Alamofire
   - ClosureKit (from `https://github.com/Reflejo/ClosureKit`)
+  - SCLAlertView
   - SVProgressHUD (HEAD)
 
 EXTERNAL SOURCES:
@@ -20,6 +22,7 @@ CHECKOUT OPTIONS:
 SPEC CHECKSUMS:
   Alamofire: fbc829692f351fa1d8a31dd75fd7f7f56fea31fb
   ClosureKit: 68911cc45bdbf13b2a150066f729fb223bfd71a3
-  SVProgressHUD: c83337f10ed32d701c423d519059a249973c8662
+  SCLAlertView: a5c726a80a938fd3127edd7dbc19da33fb936ca3
+  SVProgressHUD: 29ebaaa2574f11c0726421a77d41cb1bd190801e
 
 COCOAPODS: 0.39.0

@@ -1,5 +1,6 @@
 import UIKit
 import SceneKit
+import SCLAlertView
 import SVProgressHUD
 import ClosureKit
 
@@ -85,18 +86,23 @@ final class LEDViewController: UIViewController {
     }
 
     @IBAction private func saveAnimation() {
-        let text = self.cube.animation.name != "Unsaved" ? self.cube.animation.name : ""
-        let alert = TextActionController.showIn(self, title: "Enter animation name",
-            placeholder: "Animation name", initialText: text, includeCancel: true)
-        alert.setOKButton("OK") { text in
-            self.nameLabel.text = text
+        let alert = AlertView()
+        let textField = alert.addTextField("Animation name", keyboardType: .Default)
+        textField.text = self.cube.animation.name
+        alert.showEdit("Save animation", subTitle: "Enter animation name", closeButtonTitle: "Save")
+            .setDismissBlock {
+                guard let text = textField.text where !text.isEmpty else {
+                    return
+                }
 
-            SVProgressHUD.showWithStatus("Saving")
-            self.cube.animation.name = text ?? ""
-            self.cube.animation.saveTo(Directory.Save) { _ in
-                SVProgressHUD.showSuccessWithStatus("Saved")
+                self.nameLabel.text = text
+
+                SVProgressHUD.showWithStatus("Saving")
+                self.cube.animation.name = text
+                self.cube.animation.saveTo(Directory.Save) { _ in
+                    SVProgressHUD.showSuccessWithStatus("Saved")
+                }
             }
-        }
     }
 
     @IBAction private func play(sender: UIButton) {
@@ -113,25 +119,28 @@ final class LEDViewController: UIViewController {
     @IBAction private func sendToCube(sender: UIButton) {
         SVProgressHUD.show()
         LyftCubeAPI.playAnimation(self.cube.animation) { animationID in
-            if animationID != nil {
-                SVProgressHUD.showSuccessWithStatus("Sent")
-            } else {
-                SVProgressHUD.showErrorWithStatus("Error")
+            if animationID == nil {
+                executeAfter(0.2) { SVProgressHUD.showErrorWithStatus("Failed") }
+                return
             }
 
-            if animationID != nil, let path = self.cube.animation.path {
+            SVProgressHUD.showSuccessWithStatus("Sent")
+            if let path = self.cube.animation.path {
                 _ = try? NSFileManager.defaultManager().removeItemAtPath(path)
             }
         }
     }
 
     @IBAction private func changeDuration(sender: UIButton) {
-        let text = String(format: "%.2f", self.cube.animation.frames[self.cube.frame].duration)
-        let alert = TextActionController.showIn(self, title: "Enter animation duration", initialText: text)
-        alert.setOKButton("OK") { text in
-            self.cube.animation.frames[self.cube.frame].duration = NSTimeInterval(text ?? "") ?? 0.02
-            self.frameDidChange(self.cube.frame, isAnimating: true)
-        }
+        let alert = AlertView()
+        let textField = alert.addTextField("Duration, e.g: 0.02", keyboardType: .DecimalPad)
+        textField.text = String(format: "%.2f", self.cube.animation.frames[self.cube.frame].duration)
+        alert.showEdit("Frame duration", subTitle: "Enter frame duration in seconds" )
+            .setDismissBlock {
+                let duration = NSTimeInterval(textField.text ?? "") ?? 0.02
+                self.cube.animation.frames[self.cube.frame].duration = duration
+                self.frameDidChange(self.cube.frame, isAnimating: true)
+            }
     }
 
     @IBAction private func toolbarLongPress(sender: UILongPressGestureRecognizer) {
@@ -139,11 +148,11 @@ final class LEDViewController: UIViewController {
             return
         }
 
-        let sheet = UIAlertController(title: nil, message: nil, preferredStyle: .ActionSheet)
-        sheet.addAction(UIAlertAction(title: "Start Cube", style: .Default) { _ in LyftCubeAPI.start() })
-        sheet.addAction(UIAlertAction(title: "Shutdown Cube", style: .Default) { _ in LyftCubeAPI.stop() })
-        sheet.addAction(UIAlertAction(title: "Cancel", style: .Cancel, handler: nil))
-        self.presentViewController(sheet, animated: true, completion: nil)
+        let alert = AlertView()
+        alert.showCloseButton = false
+        alert.addButton("Start Cube") { LyftCubeAPI.start() }
+        alert.addButton("Shutdown Cube") { LyftCubeAPI.stop() }
+        alert.showWarning("Cube admin actions", subTitle: "")
     }
 
     // MARK: - Private helpers

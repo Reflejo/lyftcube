@@ -14,7 +14,8 @@
 		263115391C38831D004E96F0 /* LEDCubeScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 263115341C38831D004E96F0 /* LEDCubeScene.swift */; };
 		2631153B1C38831D004E96F0 /* LEDNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 263115361C38831D004E96F0 /* LEDNode.swift */; };
 		2631153C1C38831D004E96F0 /* LEDViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 263115371C38831D004E96F0 /* LEDViewController.swift */; };
-		263B936E1C4AED4B0042E3B9 /* TextActionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 263B936D1C4AED4B0042E3B9 /* TextActionController.swift */; };
+		26880D121C4C8049008D5281 /* AlertView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26880D111C4C8049008D5281 /* AlertView.swift */; };
+		26880D141C4C8A7D008D5281 /* HelperFunctions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26880D131C4C8A7D008D5281 /* HelperFunctions.swift */; };
 		26897F701C407C7E00E9549C /* GIF.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26897F6F1C407C7E00E9549C /* GIF.swift */; };
 		26D740DF1C3882BB003F5567 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26D740DE1C3882BB003F5567 /* AppDelegate.swift */; };
 		26D740E41C3882BB003F5567 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 26D740E21C3882BB003F5567 /* Main.storyboard */; };
@@ -41,7 +42,8 @@
 		263115341C38831D004E96F0 /* LEDCubeScene.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LEDCubeScene.swift; sourceTree = "<group>"; };
 		263115361C38831D004E96F0 /* LEDNode.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LEDNode.swift; sourceTree = "<group>"; };
 		263115371C38831D004E96F0 /* LEDViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LEDViewController.swift; sourceTree = "<group>"; };
-		263B936D1C4AED4B0042E3B9 /* TextActionController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TextActionController.swift; sourceTree = "<group>"; };
+		26880D111C4C8049008D5281 /* AlertView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AlertView.swift; sourceTree = "<group>"; };
+		26880D131C4C8A7D008D5281 /* HelperFunctions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HelperFunctions.swift; sourceTree = "<group>"; };
 		26897F6F1C407C7E00E9549C /* GIF.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GIF.swift; sourceTree = "<group>"; };
 		26D740DB1C3882BB003F5567 /* LyftCubeDesigner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LyftCubeDesigner.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		26D740DE1C3882BB003F5567 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -159,7 +161,7 @@
 				266C04091C3E529C00DF61BE /* Scenes & Nodes (3D) */,
 				26F87DA21C3A1CB800E59E2D /* AnimationEntryViewCell.swift */,
 				26F87D9C1C39E01500E59E2D /* ColorViewCell.swift */,
-				263B936D1C4AED4B0042E3B9 /* TextActionController.swift */,
+				26880D111C4C8049008D5281 /* AlertView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -167,6 +169,7 @@
 		26F87D951C38F26400E59E2D /* Extensions */ = {
 			isa = PBXGroup;
 			children = (
+				26880D131C4C8A7D008D5281 /* HelperFunctions.swift */,
 				26F87DA71C3A394C00E59E2D /* UIColor+Extension.swift */,
 			);
 			path = Extensions;
@@ -344,14 +347,15 @@
 			buildActionMask = 2147483647;
 			files = (
 				2631153C1C38831D004E96F0 /* LEDViewController.swift in Sources */,
+				26880D121C4C8049008D5281 /* AlertView.swift in Sources */,
 				263115391C38831D004E96F0 /* LEDCubeScene.swift in Sources */,
 				26F87D9B1C39CEC500E59E2D /* ColorPickerViewController.swift in Sources */,
 				261EB2A41C45C1610049E200 /* LyftCubeRoutes.swift in Sources */,
+				26880D141C4C8A7D008D5281 /* HelperFunctions.swift in Sources */,
 				261EB2A11C458EC60049E200 /* LyftCubeAPI.swift in Sources */,
 				26F87DA31C3A1CB800E59E2D /* AnimationEntryViewCell.swift in Sources */,
 				26F87D9D1C39E01500E59E2D /* ColorViewCell.swift in Sources */,
 				26F87D931C38E94A00E59E2D /* LEDCubeView.swift in Sources */,
-				263B936E1C4AED4B0042E3B9 /* TextActionController.swift in Sources */,
 				26F87DA81C3A394C00E59E2D /* UIColor+Extension.swift in Sources */,
 				263115381C38831D004E96F0 /* LEDCube.swift in Sources */,
 				2631153B1C38831D004E96F0 /* LEDNode.swift in Sources */,
